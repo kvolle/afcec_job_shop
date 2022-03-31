@@ -29,6 +29,7 @@ import collections
 
 from ortools.sat.python import cp_model
 
+PRECISE_OUTPUT = False
 
 class SolutionPrinter(cp_model.CpSolverSolutionCallback):
     """Print intermediate solutions."""
@@ -47,21 +48,32 @@ class SolutionPrinter(cp_model.CpSolverSolutionCallback):
 def flexible_jobshop():
     """Solve a small flexible jobshop problem."""
     # Data part.
+    robots = ['Black A', 'Black B', 'White', 'Yellow']
+    tasks = ['Blackout 1', 'Blackout 2', 'Blackout 3, White 2', 'Blackout 4, Yellow 2', 'White 1', 'White 3', 'Yellow 1']
+    subtasks = ['traveling outbound', 'painting', 'traveling inbound']
     jobs = [  # task = (processing_time, machine_id)
-        [  # Job 0
-            [(3, 0), (1, 1), (5, 2)],  # task 0 with 3 alternatives
-            [(2, 0), (4, 1), (6, 2)],  # task 1 with 3 alternatives
-            [ (3, 1)],                 # task 2 with 1 alternatives
+        [  # Blackout 1
+            [(20, 0), (20, 1)]
         ],
-        [  # Job 1
-            [(3, 1), (4, 2)],
-            [(5, 1), (4, 2)],
-            [(1, 1), (4, 2)],
+        [  # Blackout 2
+            [(19, 0), (19, 1)]
         ],
-        [  # Job 2
-            [(2, 0), (1, 1), (4, 2)],
-            [(2, 0), (3, 1), (4, 2)],
-            [(3, 0), (1, 1), (5, 2)],
+        [  # Blackout 3, White 2
+            [(19, 0), (19, 1)],
+            [(38, 2)]
+        ],
+        [  # Blackout 4, Yellow 2
+            [(24, 0), ( 24, 1)],
+            [(35, 3)]
+        ],
+        [  # White 1
+            [(29, 2)]
+        ],
+        [  # White 3
+            [(37, 2)]
+        ],
+        [  # Yellow 1
+            [(30, 3)]
         ],
     ]
 
@@ -188,9 +200,13 @@ def flexible_jobshop():
                     duration = jobs[job_id][task_id][alt_id][0]
                     machine = jobs[job_id][task_id][alt_id][1]
                     selected = alt_id
-            print(
-                '  task_%i_%i starts at %i (alt %i, machine %i, duration %i)' %
-                (job_id, task_id, start_value, selected, machine, duration))
+            if PRECISE_OUTPUT:
+                print(
+                    '  task_%i_%i starts at %i (alt %i, machine %i, duration %i)' %
+                    (job_id, task_id, start_value, selected, machine, duration))
+            else:
+                print(' Robot %s starts %s for Task %s at time %i until %i '
+                    %(robots[machine], subtasks[task_id % 3], tasks[job_id], start_value, start_value+duration))
 
     print('Solve status: %s' % solver.StatusName(status))
     print('Optimal objective value: %i' % solver.ObjectiveValue())
